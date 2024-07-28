@@ -1,0 +1,86 @@
+plugins {
+    id 'com.gradle.plugin-publish' version '1.2.1'
+    id 'eclipse'
+    id 'dk.mada.style' version '1.0.0'
+    id 'dk.mada.reproducible' version '1.0.2'
+}
+
+ext {
+    mavenDisplayName = 'Plugin for enforcing dk.mada java conventions'
+    mavenDescription = 'A plugin that sets up java conventions for dk.mada development.'
+}
+
+group = 'dk.mada.java'
+
+repositories {
+    repositories {
+        maven { url = uri("https://plugins.gradle.org/m2/") }
+    }
+    mavenCentral()
+}
+
+configurations {
+    addedDependencies
+}
+
+dependencies {
+    compileOnly    "org.jspecify:jspecify:1.0.0"
+}
+
+gradlePlugin {
+    website = 'https://github.com/jskov/mada-java-gradle'
+    vcsUrl = 'https://github.com/jskov/mada-java-gradle'
+    plugins {
+        stylePlugin {
+            id = 'dk.mada.java'
+            displayName = mavenDisplayName
+            description = mavenDescription
+            tags.set(['conventions', 'java'])
+            implementationClass = 'dk.mada.java.MadaJavaPlugin'
+        }
+    }
+}
+
+publishing {
+    repositories {
+        maven {
+            name = "dist"
+            url "file://${project.rootProject.file("build/dist").getAbsolutePath()}"
+        }
+    }
+}
+
+project.afterEvaluate { p ->
+    tasks.withType(GenerateMavenPom).all {
+        getPom().url = 'https://github.com/jskov/mada-java-gradle'
+        getPom().name = mavenDisplayName
+        getPom().description = mavenDescription
+
+        getPom().developers {
+            developer {
+                id = 'jskov'
+                name = 'Jesper Skov'
+                email = 'jskov@mada.dk'
+            }
+        }
+        getPom().licenses {
+            license {
+                name = 'Licensed under the EUPL-1.2-or-later'
+                url = 'https://joinup.ec.europa.eu/sites/default/files/custom-page/attachment/2020-03/EUPL-1.2%20EN.txt'
+            }
+        }
+        getPom().scm {
+            connection = 'scm:git:git://github.com/jskov/mada-java-gradle.git'
+            developerConnection = 'scm:git:ssh://github.com:jskov/mada-java-gradle.git'
+            url = 'https://github.com/jskov/mada-java-gradle/'
+        }
+    }
+}
+
+tasks.eclipse.doLast { project.mkdir("build/pluginUnderTestMetadata") }
+
+String digest(File f) {
+    byte[] b = f.readBytes()
+    byte[] d = java.security.MessageDigest.getInstance("SHA-256").digest(b)
+    return java.util.HexFormat.of().formatHex(d)
+}
