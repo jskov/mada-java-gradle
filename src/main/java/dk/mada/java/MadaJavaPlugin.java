@@ -2,14 +2,20 @@ package dk.mada.java;
 
 import java.util.List;
 
+import javax.inject.Inject;
+
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.artifacts.repositories.MavenArtifactRepository;
+import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginExtension;
+import org.gradle.api.publish.PublishingExtension;
 import org.gradle.api.publish.maven.MavenPom;
 import org.gradle.api.publish.maven.plugins.MavenPublishPlugin;
 import org.gradle.api.publish.maven.tasks.GenerateMavenPom;
+import org.gradle.api.publish.plugins.PublishingPlugin;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.jspecify.annotations.Nullable;
 
@@ -22,9 +28,11 @@ import dk.mada.java.dsl.PomScm;
  * A plugin defining the java conventions used for dk.mada projects.
  */
 public final class MadaJavaPlugin implements Plugin<Project> {
-    /** Constructs new instance. */
-    public MadaJavaPlugin() {
-        // empty
+    /**
+     * Constructs new instance.
+     */
+    @Inject
+    public MadaJavaPlugin() { // NOSONAR - public for Gradle
     }
 
     @Override
@@ -33,17 +41,31 @@ public final class MadaJavaPlugin implements Plugin<Project> {
 
         logger.info("mada-java applying plugin");
 
-        project.getExtensions().create("madaJava", MadaJavaExtension.class);
+        MadaJavaExtension ext = project.getExtensions().create("madaJava", MadaJavaExtension.class);
 
-        project.afterEvaluate(p -> p.getPlugins().withType(MavenPublishPlugin.class, mpp -> configurePublishing(p)));
+        project.afterEvaluate(p -> p.getPlugins().withType(PublishingPlugin.class, mpp -> configurePublishing(p, ext)));
+        project.afterEvaluate(p -> p.getPlugins().withType(MavenPublishPlugin.class, mpp -> configureMavenPublishing(p, ext)));
 
         project.getPlugins().withType(JavaPlugin.class, jp -> applyPlugins(project));
     }
 
-    private void configurePublishing(Project project) {
+    private void configurePublishing(Project project, MadaJavaExtension ext) {
+        PublishingExtension publishingExt = project.getExtensions().getByType(PublishingExtension.class);
+
+        if (ext.getPublishTo().isPresent()) {
+            DirectoryProperty publishTo = ext.getPublishTo();
+            MavenArtifactRepository mar = project.getRepositories().maven(m -> {
+                m.setName("dist");
+                m.setUrl(publishTo);
+            });
+            project.getLogger().info("mada-java publish to {}", publishTo.get());
+            publishingExt.getRepositories().add(mar);
+        }
+    }
+
+    private void configureMavenPublishing(Project project, MadaJavaExtension ext) {
         Logger logger = project.getLogger();
 
-        MadaJavaExtension ext = project.getExtensions().getByType(MadaJavaExtension.class);
         Pom conventionPom = ext.getPom();
         List<Developer> conventionDevelopers = conventionPom.getDevelopers();
         List<License> conventionLicenses = ext.getPom().getLicenses();
@@ -77,7 +99,6 @@ public final class MadaJavaPlugin implements Plugin<Project> {
                 });
             }
         });
-
     }
 
     private void applyPlugins(Project project) {
