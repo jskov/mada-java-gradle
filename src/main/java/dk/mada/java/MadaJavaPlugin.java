@@ -5,6 +5,8 @@ import org.gradle.api.Project;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginExtension;
+import org.gradle.api.publish.PublishingExtension;
+import org.gradle.api.publish.maven.plugins.MavenPublishPlugin;
 import org.gradle.api.tasks.compile.JavaCompile;
 
 /**
@@ -18,9 +20,31 @@ public final class MadaJavaPlugin implements Plugin<Project> {
 
     @Override
     public void apply(Project project) {
+        Logger logger = project.getLogger();
+
+        logger.lifecycle("Config plugin");
+
+        project.getExtensions().create("madaJava", MadaJavaExtension.class);
+        
+        project.afterEvaluate(p -> p.getPlugins().withType(MavenPublishPlugin.class, mpp -> configurePublishing(p)));
+
         project.getPlugins().withType(JavaPlugin.class, jp -> applyPlugins(project));
     }
 
+    private void configurePublishing(Project project) {
+        Logger logger = project.getLogger();
+
+        logger.lifecycle("Config publising");
+        
+        MadaJavaExtension ext = project.getExtensions().getByType(MadaJavaExtension.class);
+        logger.lifecycle("See {}", ext.getPom().getPackaging().get());
+        logger.lifecycle("See dev {}", ext.getPom().getDevelopers());
+        
+        project.getExtensions().getByType(PublishingExtension.class).getPublications().configureEach(p -> {
+            logger.lifecycle(" SEE {} : {}", p.getName(), p);
+        });
+    }
+    
     private void applyPlugins(Project project) {
         Logger logger = project.getLogger();
         logger.info("Applying mada.java plugin");
