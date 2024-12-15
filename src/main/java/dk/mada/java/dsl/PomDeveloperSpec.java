@@ -13,14 +13,17 @@ public interface PomDeveloperSpec {
      * @param action the action for the developer
      */
     void developer(Action<? super Developer> action);
-    
+
     /**
      * POM Developer section.
      */
     public interface Developer {
+        /** {@return the developer id} */
         Property<String> getId();
+
         /** {@return the developer name} */
         Property<String> getName();
+
         /** {@return the developer email} */
         Property<String> getEmail();
     }

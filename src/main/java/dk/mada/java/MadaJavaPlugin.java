@@ -1,17 +1,21 @@
 package dk.mada.java;
 
+import java.util.List;
+
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginExtension;
-import org.gradle.api.publish.PublishingExtension;
-import org.gradle.api.publish.maven.MavenPublication;
+import org.gradle.api.publish.maven.MavenPom;
 import org.gradle.api.publish.maven.plugins.MavenPublishPlugin;
 import org.gradle.api.publish.maven.tasks.GenerateMavenPom;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.jspecify.annotations.Nullable;
 
+import dk.mada.java.dsl.Pom;
+import dk.mada.java.dsl.PomDeveloperSpec.Developer;
+import dk.mada.java.dsl.PomLicenseSpec.License;
 import dk.mada.java.dsl.PomScm;
 
 /**
@@ -30,7 +34,7 @@ public final class MadaJavaPlugin implements Plugin<Project> {
         logger.lifecycle("Config plugin");
 
         project.getExtensions().create("madaJava", MadaJavaExtension.class);
-        
+
         project.afterEvaluate(p -> p.getPlugins().withType(MavenPublishPlugin.class, mpp -> configurePublishing(p)));
 
         project.getPlugins().withType(JavaPlugin.class, jp -> applyPlugins(project));
@@ -39,36 +43,43 @@ public final class MadaJavaPlugin implements Plugin<Project> {
     private void configurePublishing(Project project) {
         Logger logger = project.getLogger();
 
-        logger.lifecycle("Config publising");
-        
         MadaJavaExtension ext = project.getExtensions().getByType(MadaJavaExtension.class);
-        logger.lifecycle("See {}", ext.getPom().getPackaging());
-        logger.lifecycle("See dev {}", ext.getPom().getDevelopers());
-        logger.lifecycle("See licenses {}", ext.getPom().getLicenses());
-        @Nullable
-        PomScm conventionScm = ext.getPom().getScm();
-        logger.lifecycle("See scm {}", conventionScm);
-        
-        project.getExtensions().getByType(PublishingExtension.class).getPublications().configureEach(p -> {
-            logger.lifecycle(" SEE {} : {}", p.getName(), p);
-            if (p instanceof MavenPublication mp) {
-                logger.lifecycle(" SEE MAVEN {} : {}", p.getName(), mp);
-            }
-        });
+        Pom conventionPom = ext.getPom();
+        List<Developer> conventionDevelopers = conventionPom.getDevelopers();
+        List<License> conventionLicenses = ext.getPom().getLicenses();
+        @Nullable PomScm conventionScm = ext.getPom().getScm();
 
         project.getTasks().withType(GenerateMavenPom.class).configureEach(pt -> {
-            logger.lifecycle(" TASK {}", pt.getName());
+            logger.info(" mada.java configuring task {}", pt.getName());
+            MavenPom pom = pt.getPom();
+
+            pom.getName().set(conventionPom.getName());
+            pom.getUrl().set(conventionPom.getUrl());
+            pom.getDescription().set(conventionPom.getDescription());
+            pom.setPackaging(conventionPom.getPackaging().getOrNull());
+
+            pom.developers(developer -> conventionDevelopers.forEach(conventionDeveloper -> developer.developer(dev -> {
+                dev.getId().set(conventionDeveloper.getId());
+                dev.getName().set(conventionDeveloper.getName());
+                dev.getEmail().set(conventionDeveloper.getEmail());
+            })));
+
+            pom.licenses(license -> conventionLicenses.forEach(conventionLicense -> license.license(lic -> {
+                lic.getName().set(conventionLicense.getName());
+                lic.getUrl().set(conventionLicense.getUrl());
+            })));
+
             if (conventionScm != null) {
-                logger.lifecycle(" do SCM");
-                pt.getPom().scm(scm -> {
+                pom.scm(scm -> {
+                    scm.getConnection().set(conventionScm.getConnection());
+                    scm.getDeveloperConnection().set(conventionScm.getDeveloperConnection());
                     scm.getUrl().set(conventionScm.getUrl());
                 });
             }
         });
-        
 
     }
-    
+
     private void applyPlugins(Project project) {
         Logger logger = project.getLogger();
         logger.info("Applying mada.java plugin");

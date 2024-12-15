@@ -20,6 +20,7 @@ public interface PomLicenseSpec {
     public interface License {
         /** {@return the license name} */
         Property<String> getName();
+
         /** {@return a URL to the license description} */
         Property<String> getUrl();
     }
