@@ -6,12 +6,13 @@ import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.publish.PublishingExtension;
-import org.gradle.api.publish.maven.MavenPomScm;
 import org.gradle.api.publish.maven.MavenPublication;
 import org.gradle.api.publish.maven.plugins.MavenPublishPlugin;
 import org.gradle.api.publish.maven.tasks.GenerateMavenPom;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.jspecify.annotations.Nullable;
+
+import dk.mada.java.dsl.PomScm;
 
 /**
  * A plugin defining the java conventions used for dk.mada projects.
@@ -45,7 +46,7 @@ public final class MadaJavaPlugin implements Plugin<Project> {
         logger.lifecycle("See dev {}", ext.getPom().getDevelopers());
         logger.lifecycle("See licenses {}", ext.getPom().getLicenses());
         @Nullable
-        MavenPomScm conventionScm = ext.getPom().getScm();
+        PomScm conventionScm = ext.getPom().getScm();
         logger.lifecycle("See scm {}", conventionScm);
         
         project.getExtensions().getByType(PublishingExtension.class).getPublications().configureEach(p -> {
