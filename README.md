@@ -1,6 +1,6 @@
 # mada-java-gradle
 
-Gradle plugin to configure projects to use mada java conventions
+Custom convention Gradle plugin to configure mada java projects to my liking.
 
 The intention is to simplify Gradle build files and avoid configuration duplication.
 
