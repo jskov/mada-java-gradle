@@ -6,8 +6,12 @@ import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.publish.PublishingExtension;
+import org.gradle.api.publish.maven.MavenPomScm;
+import org.gradle.api.publish.maven.MavenPublication;
 import org.gradle.api.publish.maven.plugins.MavenPublishPlugin;
+import org.gradle.api.publish.maven.tasks.GenerateMavenPom;
 import org.gradle.api.tasks.compile.JavaCompile;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A plugin defining the java conventions used for dk.mada projects.
@@ -37,12 +41,31 @@ public final class MadaJavaPlugin implements Plugin<Project> {
         logger.lifecycle("Config publising");
         
         MadaJavaExtension ext = project.getExtensions().getByType(MadaJavaExtension.class);
-        logger.lifecycle("See {}", ext.getPom().getPackaging().get());
+        logger.lifecycle("See {}", ext.getPom().getPackaging());
         logger.lifecycle("See dev {}", ext.getPom().getDevelopers());
+        logger.lifecycle("See licenses {}", ext.getPom().getLicenses());
+        @Nullable
+        MavenPomScm conventionScm = ext.getPom().getScm();
+        logger.lifecycle("See scm {}", conventionScm);
         
         project.getExtensions().getByType(PublishingExtension.class).getPublications().configureEach(p -> {
             logger.lifecycle(" SEE {} : {}", p.getName(), p);
+            if (p instanceof MavenPublication mp) {
+                logger.lifecycle(" SEE MAVEN {} : {}", p.getName(), mp);
+            }
         });
+
+        project.getTasks().withType(GenerateMavenPom.class).configureEach(pt -> {
+            logger.lifecycle(" TASK {}", pt.getName());
+            if (conventionScm != null) {
+                logger.lifecycle(" do SCM");
+                pt.getPom().scm(scm -> {
+                    scm.getUrl().set(conventionScm.getUrl());
+                });
+            }
+        });
+        
+
     }
     
     private void applyPlugins(Project project) {

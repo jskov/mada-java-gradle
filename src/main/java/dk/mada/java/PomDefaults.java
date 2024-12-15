@@ -2,6 +2,7 @@ package dk.mada.java;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import javax.inject.Inject;
 
@@ -11,11 +12,19 @@ import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.Property;
 import org.gradle.api.publish.maven.MavenPomDeveloper;
 import org.gradle.api.publish.maven.MavenPomDeveloperSpec;
+import org.gradle.api.publish.maven.MavenPomLicense;
+import org.gradle.api.publish.maven.MavenPomLicenseSpec;
+import org.gradle.api.publish.maven.MavenPomScm;
 import org.gradle.api.publish.maven.internal.publication.DefaultMavenPomDeveloper;
+import org.gradle.api.publish.maven.internal.publication.DefaultMavenPomLicense;
+import org.gradle.api.publish.maven.internal.publication.DefaultMavenPomScm;
+import org.jspecify.annotations.Nullable;
 
-public abstract class PomDefaults implements MavenPomDeveloperSpec {
-    private ObjectFactory objectFactory;
+public abstract class PomDefaults implements MavenPomDeveloperSpec, MavenPomLicenseSpec {
+    private final ObjectFactory objectFactory;
 
+    @Nullable private MavenPomScm scm;
+    
     /** {@return the POM URL} */
     public abstract Property<String> getUrl();
 
@@ -28,26 +37,51 @@ public abstract class PomDefaults implements MavenPomDeveloperSpec {
     /** {@return the POM packaging} */
     public abstract Property<String> getPackaging();
 
+    private final List<MavenPomDeveloper> developers = new ArrayList<>();
+    private final List<MavenPomLicense> licenses = new ArrayList<>();
+
     @Inject
-    public PomDefaults(ObjectFactory objectFactory) {
-        this.objectFactory = objectFactory;
+    public PomDefaults(@Nullable ObjectFactory objectFactory) {
+        this.objectFactory = Objects.requireNonNull(objectFactory);
     }
-        
-    private List<MavenPomDeveloper> developers = new ArrayList<>();
+
     
-//    public abstract DomainObjectSet<MavenPomDeveloperSpec> getDevelopers();
-    
-    public void developers(Action<? super MavenPomDeveloperSpec> action) {
-        action.execute(this);
+    public @Nullable MavenPomScm getScm() {
+        return scm;
+    }
+
+    public void scm(Action<? super MavenPomScm> action) {
+        if (scm == null) {
+            scm = objectFactory.newInstance(DefaultMavenPomScm.class, objectFactory);
+        }
+        action.execute(scm);
     }
 
     public List<MavenPomDeveloper> getDevelopers() {
         return developers;
     }
 
+    public void developers(Action<? super MavenPomDeveloperSpec> action) {
+        action.execute(this);
+    }
+
     @Override
     public void developer(Action<? super MavenPomDeveloper> action) {
         configureAndAdd(DefaultMavenPomDeveloper.class, action, developers);
+    }
+
+    
+    public void licenses(Action<? super MavenPomLicenseSpec> action) {
+        action.execute(this);
+    }
+
+    public List<MavenPomLicense> getLicenses() {
+        return licenses;
+    }
+
+    @Override
+    public void license(Action<? super MavenPomLicense> action) {
+        configureAndAdd(DefaultMavenPomLicense.class, action, licenses);
     }
 
     private <T> void configureAndAdd(Class<? extends T> clazz, Action<? super T> action, List<T> items) {
