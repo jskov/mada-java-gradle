@@ -31,7 +31,7 @@ public final class MadaJavaPlugin implements Plugin<Project> {
     public void apply(Project project) {
         Logger logger = project.getLogger();
 
-        logger.lifecycle("Config plugin");
+        logger.info("mada-java applying plugin");
 
         project.getExtensions().create("madaJava", MadaJavaExtension.class);
 
@@ -50,7 +50,7 @@ public final class MadaJavaPlugin implements Plugin<Project> {
         @Nullable PomScm conventionScm = ext.getPom().getScm();
 
         project.getTasks().withType(GenerateMavenPom.class).configureEach(pt -> {
-            logger.info(" mada.java configuring task {}", pt.getName());
+            logger.info("mada-java configuring task {}", pt.getName());
             MavenPom pom = pt.getPom();
 
             pom.getName().set(conventionPom.getName());
