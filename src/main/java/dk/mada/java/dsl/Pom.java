@@ -42,7 +42,7 @@ public abstract class Pom implements PomDeveloperSpec, PomLicenseSpec {
 
     /**
      * Run spec action on the POM SCM section.
-     * 
+     *
      * Defines the POM SCM if it has not already been defined.
      *
      * @param action the action to run
