@@ -1,9 +1,11 @@
 package dk.mada.java;
 
+import dk.mada.java.dsl.Pom;
+import dk.mada.java.dsl.PomDeveloperSpec.Developer;
+import dk.mada.java.dsl.PomLicenseSpec.License;
+import dk.mada.java.dsl.PomScm;
 import java.util.List;
-
 import javax.inject.Inject;
-
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository;
@@ -18,11 +20,6 @@ import org.gradle.api.publish.maven.tasks.GenerateMavenPom;
 import org.gradle.api.publish.plugins.PublishingPlugin;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.jspecify.annotations.Nullable;
-
-import dk.mada.java.dsl.Pom;
-import dk.mada.java.dsl.PomDeveloperSpec.Developer;
-import dk.mada.java.dsl.PomLicenseSpec.License;
-import dk.mada.java.dsl.PomScm;
 
 /**
  * A plugin defining the java conventions used for dk.mada projects.
@@ -44,7 +41,8 @@ public final class MadaJavaPlugin implements Plugin<Project> {
         MadaJavaExtension ext = project.getExtensions().create("madaJava", MadaJavaExtension.class);
 
         project.afterEvaluate(p -> p.getPlugins().withType(PublishingPlugin.class, mpp -> configurePublishing(p, ext)));
-        project.afterEvaluate(p -> p.getPlugins().withType(MavenPublishPlugin.class, mpp -> configureMavenPublishing(p, ext)));
+        project.afterEvaluate(
+                p -> p.getPlugins().withType(MavenPublishPlugin.class, mpp -> configureMavenPublishing(p, ext)));
 
         project.getPlugins().withType(JavaPlugin.class, jp -> applyPlugins(project));
     }

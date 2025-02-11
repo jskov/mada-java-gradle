@@ -3,9 +3,7 @@ package dk.mada.java.dsl;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-
 import javax.inject.Inject;
-
 import org.gradle.api.Action;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.Property;
