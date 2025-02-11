@@ -1,12 +1,10 @@
 package dk.mada.java;
 
+import dk.mada.java.dsl.Pom;
 import java.io.File;
-
 import org.gradle.api.Action;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.tasks.Nested;
-
-import dk.mada.java.dsl.Pom;
 
 /**
  * Extension for mada-java plugin.
